@@ -2,11 +2,11 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import './mobile.css';
-import PanelAdministrador from './components/administrador_vista';
+import App from './App';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <PanelAdministrador />
+    <App />
   </React.StrictMode>
 );

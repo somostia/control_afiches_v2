@@ -8,6 +8,8 @@ const VistaDiseñador = () => {
     const [tareas, setTareas] = useState([{ local: '', tipo: '', cantidad: 1 }]);
     const [disenoReferencia, setDisenoReferencia] = useState('');
     const [mostrarFormulario, setMostrarFormulario] = useState(false);
+    const [sucursales, setSucursales] = useState([]);
+    const [cargandoSucursales, setCargandoSucursales] = useState(false);
 
     // Estado para VoBo de dibujo
     const [pendientesDiseno, setPendientesDiseno] = useState([]);
@@ -35,6 +37,20 @@ const VistaDiseñador = () => {
     };
 
     useEffect(() => { cargarRevisiones(); }, []);
+
+    // Cargar sucursales cuando se abre el formulario
+    const cargarSucursales = async () => {
+        setCargandoSucursales(true);
+        try {
+            const res = await axios.get(`${API_BASE_URL}/sucursales`);
+            setSucursales(res.data);
+        } catch (err) {
+            console.error('Error al cargar sucursales:', err);
+            alert('No se pudieron cargar las sucursales');
+        } finally {
+            setCargandoSucursales(false);
+        }
+    };
 
     // Funciones para el formulario de campaña
     const agregarFila = () => {
@@ -169,7 +185,10 @@ const VistaDiseñador = () => {
                     <div style={{ textAlign: 'center' }}>
                         <button
                             style={buttonPrimaryStyle}
-                            onClick={() => setMostrarFormulario(true)}
+                            onClick={() => {
+                                setMostrarFormulario(true);
+                                cargarSucursales();
+                            }}
                         >
                             + Crear Nueva Campaña
                         </button>
@@ -230,31 +249,49 @@ const VistaDiseñador = () => {
                             </div>
 
                             <h3>Locales y Diseños</h3>
-                            {tareas.map((tarea, index) => (
-                                <div key={index} style={{ marginBottom: '10px', display: 'flex', gap: '10px' }}>
-                                    <input
-                                        name="local"
-                                        placeholder="Nombre del Local"
-                                        onChange={(e) => manejarCambioTarea(index, e)}
-                                        required
-                                        style={{ flex: 2, padding: '8px' }}
-                                    />
-                                    <input
-                                        name="tipo"
-                                        placeholder="Tipo de Afiche"
-                                        onChange={(e) => manejarCambioTarea(index, e)}
-                                        required
-                                        style={{ flex: 2, padding: '8px' }}
-                                    />
-                                    <input
-                                        name="cantidad"
-                                        type="number"
-                                        min="1"
-                                        onChange={(e) => manejarCambioTarea(index, e)}
-                                        style={{ width: '80px', padding: '8px' }}
-                                    />
-                                </div>
-                            ))}
+                            {cargandoSucursales ? (
+                                <p style={{ textAlign: 'center', color: '#7f8c8d' }}>Cargando sucursales...</p>
+                            ) : (
+                                tareas.map((tarea, index) => (
+                                    <div key={index} style={{ marginBottom: '10px', display: 'flex', gap: '10px' }}>
+                                        <select
+                                            name="local"
+                                            value={tarea.local}
+                                            onChange={(e) => manejarCambioTarea(index, e)}
+                                            required
+                                            style={{ flex: 2, padding: '8px', fontSize: '14px' }}
+                                        >
+                                            <option value="">Seleccionar Local</option>
+                                            {sucursales.map(suc => (
+                                                <option key={suc.id} value={suc.nombre}>
+                                                    {suc.nombre}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <select
+                                            name="tipo"
+                                            value={tarea.tipo}
+                                            onChange={(e) => manejarCambioTarea(index, e)}
+                                            required
+                                            style={{ flex: 2, padding: '8px' }}
+                                        >
+                                            <option value="">Seleccionar Tamaño</option>
+                                            <option value="S">S</option>
+                                            <option value="M">M</option>
+                                            <option value="L">L</option>
+                                            <option value="XL">XL</option>
+                                        </select>
+                                        <input
+                                            name="cantidad"
+                                            type="number"
+                                            min="1"
+                                            defaultValue="1"
+                                            onChange={(e) => manejarCambioTarea(index, e)}
+                                            style={{ width: '80px', padding: '8px' }}
+                                        />
+                                    </div>
+                                ))
+                            )}
 
                             <button
                                 type="button"
@@ -304,21 +341,25 @@ const VistaDiseñador = () => {
                                         <button
                                             onClick={() => verDiseno(t)}
                                             style={{
-                                                padding: '6px 14px',
-                                                fontSize: '15px',
+                                                padding: '10px 20px',
+                                                fontSize: '16px',
                                                 backgroundColor: '#f39c12',
                                                 color: 'white',
                                                 border: 'none',
-                                                borderRadius: '7px',
+                                                borderRadius: '8px',
                                                 cursor: 'pointer',
                                                 fontWeight: 'bold',
-                                                flex: 1,
+                                                maxWidth: '200px',
                                                 textDecoration: 'none',
                                                 textAlign: 'center',
-                                                display: 'block'
+                                                display: 'block',
+                                                boxShadow: '0 2px 6px rgba(243, 156, 18, 0.3)',
+                                                transition: 'all 0.2s ease'
                                             }}
+                                            onMouseEnter={(e) => e.target.style.backgroundColor = '#e67e22'}
+                                            onMouseLeave={(e) => e.target.style.backgroundColor = '#f39c12'}
                                         >
-                                            Afiche
+                                            🎨 Ver Diseño
                                         </button>
                                     )}
                                 </div>
@@ -373,21 +414,25 @@ const VistaDiseñador = () => {
                                         <button
                                             onClick={() => verDiseno(t)}
                                             style={{
-                                                padding: '6px 14px',
-                                                fontSize: '15px',
+                                                padding: '10px 20px',
+                                                fontSize: '16px',
                                                 backgroundColor: '#f39c12',
                                                 color: 'white',
                                                 border: 'none',
-                                                borderRadius: '7px',
+                                                borderRadius: '8px',
                                                 cursor: 'pointer',
                                                 fontWeight: 'bold',
-                                                flex: 1,
+                                                maxWidth: '200px',
                                                 textDecoration: 'none',
                                                 textAlign: 'center',
-                                                display: 'block'
+                                                display: 'block',
+                                                boxShadow: '0 2px 6px rgba(243, 156, 18, 0.3)',
+                                                transition: 'all 0.2s ease'
                                             }}
+                                            onMouseEnter={(e) => e.target.style.backgroundColor = '#e67e22'}
+                                            onMouseLeave={(e) => e.target.style.backgroundColor = '#f39c12'}
                                         >
-                                            Afiche
+                                            🎨 Ver Diseño
                                         </button>
                                     )}
                                     {t.foto_evidencia_url && (

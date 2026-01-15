@@ -5,9 +5,13 @@ Sistema completo para gestionar campañas de afiches publicitarios, desde el dis
 ## 🎯 Características
 
 - **Panel de Supervisor**: Vista general de todas las tareas con indicadores de estado en tiempo real
-- **Vista de Diseñador**: Creación de campañas, revisión y aprobación de diseños e implementaciones
+- **Vista de Diseñador**: Creación de campañas con selector de sucursales, revisión y aprobación de diseños e implementaciones
 - **Vista de Dibujante**: Carga de diseños, preparación de paquetes y confirmación de despachos
 - **Vista de Implementador**: Recepción de paquetes y registro de instalaciones con foto y GPS
+  - **Implementadores por Sucursal**: Cada implementador ve únicamente las tareas de su local asignado
+- **Catálogo de Sucursales**: Base de datos centralizada con todas las sucursales disponibles
+- **Sistema de Autenticación**: Control de acceso basado en roles con sesiones persistentes
+- **Relación Sucursal-Implementador**: Garantiza que cada local tenga su implementador asignado
 
 ## 🛠️ Tecnologías
 
@@ -99,30 +103,58 @@ npm start
 ```
 La aplicación estará disponible en `http://localhost:3000`
 
-## 📁 Estructura del Proyecto
+## � Usuarios del Sistema
+
+El sistema incluye autenticación con roles específicos y control de acceso por sucursal para implementadores.
+
+### Usuarios Administrativos
+
+| Usuario | Contraseña | Rol | Descripción |
+|---------|------------|-----|-------------|
+| admin | admin | admin | Acceso completo a todas las vistas |
+| supervisor | supervisor | supervisor | Monitoreo de todas las tareas |
+| disenador | disenador | disenador | Creación de campañas y aprobaciones |
+| dibujante | dibujante | dibujante | Diseño y preparación de paquetes |
+
+### Implementadores por Sucursal
+
+| Usuario | Contraseña | Sucursal Asignada |
+|---------|------------|-------------------|
+| impl_plaza | impl_plaza | Mall Plaza |
+| impl_costanera | impl_costanera | Costanera Center |
+| impl_dehesa | impl_dehesa | Portal La Dehesa |
+| impl_arauco | impl_arauco | Parque Arauco |
+| impl_altocondes | impl_altocondes | Alto Las Condes |
+
+> **Nota**: Cada implementador solo puede ver y gestionar las tareas de su sucursal asignada.
+
+## �📁 Estructura del Proyecto
 
 ```
 control_afiches/
 ├── backend/
 │   ├── db.js                 # Configuración de PostgreSQL
-│   ├── server.js             # Servidor Express
+│   ├── server.js             # Servidor Express con autenticación
 │   ├── validators.js         # Validadores de datos
+│   ├── migrar-usuarios.js    # Migración inicial de autenticación
+│   ├── migrar-implementadores.js  # Migración para implementadores por sucursal
 │   ├── limpiar-db.js         # Script para limpiar base de datos
-│   ├── migration.sql         # Migraciones de base de datos
 │   └── uploads/              # Carpeta de archivos subidos
 ├── src/
 │   ├── components/
+│   │   ├── login.jsx         # Pantalla de inicio de sesión
 │   │   ├── administrador_vista.jsx
 │   │   ├── supervisor_vista.jsx
 │   │   ├── diseñador_vista.jsx
 │   │   ├── dibujante_vista.jsx
-│   │   └── implementador_vista.jsx
+│   │   └── implementador_vista.jsx  # Con filtrado por sucursal
+│   ├── App.js                # Componente principal con autenticación
 │   ├── config.js             # Configuración de API
 │   ├── index.js              # Punto de entrada React
 │   └── index.css             # Estilos globales
 ├── public/
 │   └── index.html
-├── schema.sql                # Schema de la base de datos
+├── schema.sql                # Schema de la base de datos con sucursales
 ├── .env.example              # Ejemplo de variables de entorno
 ├── .gitignore
 └── package.json
@@ -135,10 +167,12 @@ control_afiches/
 3. **Diseñador** revisa y aprueba/rechaza el diseño
 4. **Dibujante** prepara el paquete físico y sube foto de confirmación
 5. **Dibujante** confirma el despacho del paquete
-6. **Implementador** recibe el paquete en el local
+6. **Implementador** (del local específico) recibe el paquete en su sucursal
 7. **Implementador** instala el afiche y sube foto con GPS
 8. **Diseñador** revisa y aprueba la implementación final
 9. **Supervisor** monitorea todo el proceso en tiempo real
+
+> **Nota**: Los implementadores solo ven las tareas de su sucursal asignada, lo que permite tener múltiples implementadores trabajando simultáneamente en diferentes locales.
 
 ## 🎨 Características de la UI
 
@@ -164,17 +198,60 @@ control_afiches/
 cd backend
 node limpiar-db.js
 
-# Ejecutar migraciones
-node run-migration.js
+# Ejecutar migración de implementadores por sucursal
+node migrar-implementadores.js
 ```
 
+## 🔄 Migraciones
+
+Si ya tienes una base de datos existente, ejecuta las migraciones en este orden:
+
+```bash
+cd backend
+
+# 1. Crear tabla de sucursales y catálogo inicial
+node migrar-sucursales.js
+
+# 2. Crear implementadores vinculados a sucursales
+node migrar-implementadores.js
+
+# 3. Verificar que todo esté correcto
+node verificar-relaciones.js
+```
+
+### Migración de Sucursales
+Este script:
+- Crea la tabla `sucursales` con id, nombre, dirección, activo
+- Inserta 5 sucursales iniciales
+- Crea índice para optimizar búsquedas
+
+### Migración de Implementadores
+Este script:
+- Agrega la columna `sucursal_asignada` a la tabla usuarios
+- Elimina todos los implementadores anteriores
+- Crea 5 implementadores específicos, uno por sucursal
+- Muestra un resumen con credenciales
+
+### Verificación de Relaciones
+Este script muestra:
+- Lista de implementadores y sus sucursales asignadas
+- Lista de sucursales disponibles
+- Relación completa entre sucursales e implementadores
+
 ## 📝 API Endpoints
+
+### Autenticación
+- `POST /login` - Autenticar usuario (retorna: id, nombre, usuario, rol, sucursal_asignada)
+
+### Sucursales
+- `GET /sucursales` - Obtener catálogo de sucursales disponibles (usado por formulario de diseñador)
 
 ### Campañas
 - `POST /campanas` - Crear nueva campaña
 
 ### Dashboard
 - `GET /dashboard` - Obtener todas las tareas
+- `GET /dashboard?sucursal=NombreSucursal` - Filtrar tareas por sucursal (para implementadores)
 
 ### Diseño
 - `POST /upload-diseno` - Subir archivo de diseño

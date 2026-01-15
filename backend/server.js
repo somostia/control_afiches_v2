@@ -56,6 +56,41 @@ app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static(uploadsDir));
 
+// Ruta de login
+app.post('/login', async (req, res) => {
+    const { usuario, password } = req.body;
+
+    if (!usuario || !password) {
+        return res.status(400).json({ error: 'Usuario y contraseña son requeridos' });
+    }
+
+    try {
+        const resultado = await pool.query(
+            'SELECT id, nombre, usuario, rol, sucursal_asignada FROM usuarios WHERE usuario = $1 AND password = $2',
+            [usuario, password]
+        );
+
+        if (resultado.rows.length === 0) {
+            return res.status(401).json({ error: 'Usuario o contraseña incorrectos' });
+        }
+
+        const user = resultado.rows[0];
+        res.json({
+            mensaje: 'Login exitoso',
+            usuario: {
+                id: user.id,
+                nombre: user.nombre,
+                usuario: user.usuario,
+                rol: user.rol,
+                sucursal_asignada: user.sucursal_asignada
+            }
+        });
+    } catch (err) {
+        console.error('❌ Error en login:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Ruta raíz - Health check
 app.get('/', (req, res) => {
     res.json({
@@ -126,16 +161,42 @@ app.post('/campanas', validateCampana, async (req, res) => {
 });
 
 // 2. Ruta para que el SUPERVISOR vea todos los semáforos
+// También usada por IMPLEMENTADORES con filtro por sucursal
 app.get('/dashboard', async (req, res) => {
     try {
-        const resultado = await pool.query(`
+        const { sucursal } = req.query; // Parámetro opcional para filtrar por sucursal
+
+        let query = `
             SELECT 
                 t.*,
                 c.nombre as nombre_campana
             FROM tareas_implementacion t
             LEFT JOIN campanas c ON t.campana_id = c.id
-            ORDER BY t.id DESC
-        `);
+        `;
+
+        let params = [];
+
+        // Si viene sucursal en el query, filtrar por ella
+        if (sucursal) {
+            query += ` WHERE t.sucursal_nombre = $1`;
+            params.push(sucursal);
+        }
+
+        query += ` ORDER BY t.id DESC`;
+
+        const resultado = await pool.query(query, params);
+        res.json(resultado.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 3. Ruta para obtener todas las sucursales disponibles
+app.get('/sucursales', async (req, res) => {
+    try {
+        const resultado = await pool.query(
+            'SELECT id, nombre, direccion FROM sucursales WHERE activo = TRUE ORDER BY nombre'
+        );
         res.json(resultado.rows);
     } catch (err) {
         res.status(500).json({ error: err.message });

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import API_BASE_URL from '../config';
 
-const VistaImplementador = () => {
+const VistaImplementador = ({ usuario }) => {
     const [tareas, setTareas] = useState([]);
     const [uploading, setUploading] = useState(null);
     const [showModal, setShowModal] = useState(false);
@@ -13,7 +13,13 @@ const VistaImplementador = () => {
     const [modalSucursal, setModalSucursal] = useState({ visible: false, url: '', tarea: null });
 
     const cargarRuta = async () => {
-        const res = await axios.get(`${API_BASE_URL}/dashboard`);
+        // Si el usuario tiene sucursal asignada, filtrar por ella
+        const params = usuario?.sucursal_asignada
+            ? { params: { sucursal: usuario.sucursal_asignada } }
+            : {};
+
+        const res = await axios.get(`${API_BASE_URL}/dashboard`, params);
+
         // Mostrar paquetes listos para despacho, en tránsito, ya recibidos o pendientes de VoBo
         setTareas(res.data.filter(t =>
             (t.estado_logistica === 'en_preparacion' ||
@@ -119,7 +125,22 @@ const VistaImplementador = () => {
         <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
             <div style={{ backgroundColor: 'white', borderRadius: '8px', padding: '20px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
                 <div style={{ marginBottom: '15px' }}>
-                    <h2 style={{ margin: 0 }}>Mi Ruta de Hoy ({tareas.length})</h2>
+                    <h2 style={{ margin: 0 }}>
+                        Mi Ruta de Hoy ({tareas.length})
+                        {usuario?.sucursal_asignada && (
+                            <span style={{
+                                marginLeft: '15px',
+                                fontSize: '16px',
+                                fontWeight: 'normal',
+                                color: '#27ae60',
+                                backgroundColor: '#d5f4e6',
+                                padding: '5px 15px',
+                                borderRadius: '20px'
+                            }}>
+                                📍 {usuario.sucursal_asignada}
+                            </span>
+                        )}
+                    </h2>
                     <p style={{ color: '#7f8c8d', marginTop: '5px', marginBottom: 0 }}>
                         Paquetes asignados para instalación
                     </p>
