@@ -31,7 +31,7 @@ const logger = winston.createLogger({
     defaultMeta: { service: 'afiches-backend' },
     transports: [
         new winston.transports.File({ filename: path.join(__dirname, '..', 'logs', 'error.log'), level: 'error' }),
-        new winston.transports.File({ filename: path.join(__dirname, '..', 'logs', 'combined.log' })
+        new winston.transports.File({ filename: path.join(__dirname, '..', 'logs', 'combined.log') })
     ]
 });
 
@@ -99,7 +99,7 @@ const loginLimiter = rateLimit({
 // Middleware
 app.use(helmet());
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: process.env.FRONTEND_URL || 'http://localhost:3003',
     credentials: true
 }));
 app.use(express.json());

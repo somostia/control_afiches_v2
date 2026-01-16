@@ -30,6 +30,13 @@
 psql -U afiches_user -d sistema_afiches -f schema.sql
 ```
 
+4. **IMPORTANTE - Migrar contraseñas a bcrypt:**
+```bash
+# Después de importar el schema y antes de iniciar el servidor
+node backend/migrate-passwords.js
+# Escribir "SI" cuando pregunte para confirmar la migración
+```
+
 ## Paso 3: Subir Código
 
 Opción A - Git (Recomendado):
