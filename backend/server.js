@@ -3,6 +3,10 @@ const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const bcrypt = require('bcrypt');
+const rateLimit = require('express-rate-limit');
+const helmet = require('helmet');
+const winston = require('winston');
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
 const pool = require('./db');
@@ -15,6 +19,32 @@ const {
     validateVoBoImplementacion
 } = require('./validators');
 
+// Configurar Winston Logger
+const logger = winston.createLogger({
+    level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
+    format: winston.format.combine(
+        winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+        winston.format.errors({ stack: true }),
+        winston.format.splat(),
+        winston.format.json()
+    ),
+    defaultMeta: { service: 'afiches-backend' },
+    transports: [
+        new winston.transports.File({ filename: path.join(__dirname, '..', 'logs', 'error.log'), level: 'error' }),
+        new winston.transports.File({ filename: path.join(__dirname, '..', 'logs', 'combined.log' })
+    ]
+});
+
+// En desarrollo, también logear a consola
+if (process.env.NODE_ENV !== 'production') {
+    logger.add(new winston.transports.Console({
+        format: winston.format.combine(
+            winston.format.colorize(),
+            winston.format.simple()
+        )
+    }));
+}
+
 const app = express();
 const PORT = process.env.PORT || 3002;
 
@@ -22,6 +52,12 @@ const PORT = process.env.PORT || 3002;
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Crear carpeta de logs si no existe
+const logsDir = path.join(__dirname, '..', 'logs');
+if (!fs.existsSync(logsDir)) {
+    fs.mkdirSync(logsDir, { recursive: true });
 }
 
 // Configuración de multer para subir archivos
@@ -51,43 +87,63 @@ const upload = multer({
     }
 });
 
+// Rate Limiter para Login
+const loginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutos
+    max: 5, // límite de 5 intentos
+    message: 'Demasiados intentos de login. Por favor, intente nuevamente en 15 minutos.',
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
 // Middleware
-app.use(cors());
+app.use(helmet());
+app.use(cors({
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    credentials: true
+}));
 app.use(express.json());
 app.use('/uploads', express.static(uploadsDir));
 
 // Ruta de login
-app.post('/login', async (req, res) => {
+app.post('/login', loginLimiter, async (req, res) => {
     const { usuario, password } = req.body;
 
     if (!usuario || !password) {
+        logger.warn('Intento de login sin credenciales');
         return res.status(400).json({ error: 'Usuario y contraseña son requeridos' });
     }
 
     try {
         const resultado = await pool.query(
-            'SELECT id, nombre, usuario, rol, sucursal_asignada FROM usuarios WHERE usuario = $1 AND password = $2',
-            [usuario, password]
+            'SELECT id, nombre, usuario, rol, sucursal_asignada, password FROM usuarios WHERE usuario = $1',
+            [usuario]
         );
 
         if (resultado.rows.length === 0) {
+            logger.warn(`Intento de login fallido para usuario: ${usuario}`);
             return res.status(401).json({ error: 'Usuario o contraseña incorrectos' });
         }
 
         const user = resultado.rows[0];
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+
+        if (!isPasswordValid) {
+            logger.warn(`Contraseña incorrecta para usuario: ${usuario}`);
+            return res.status(401).json({ error: 'Usuario o contraseña incorrectos' });
+        }
+
+        // No enviar password al cliente
+        delete user.password;
+
+        logger.info(`Login exitoso para usuario: ${usuario}`);
         res.json({
-            mensaje: 'Login exitoso',
-            usuario: {
-                id: user.id,
-                nombre: user.nombre,
-                usuario: user.usuario,
-                rol: user.rol,
-                sucursal_asignada: user.sucursal_asignada
-            }
+            success: true,
+            usuario: user
         });
     } catch (err) {
-        console.error('❌ Error en login:', err);
-        res.status(500).json({ error: err.message });
+        logger.error('Error en login:', err);
+        res.status(500).json({ error: 'Error en el servidor' });
     }
 });
 
@@ -120,8 +176,8 @@ app.post('/upload-diseno', upload.single('archivo'), (req, res) => {
         }
 
         const fileUrl = `http://localhost:${PORT}/uploads/${req.file.filename}`;
-        console.log('📤 Archivo subido:', req.file.filename);
-        console.log('🔗 URL generada:', fileUrl);
+        logger.info(`Archivo subido: ${req.file.filename}`);
+        logger.debug(`URL generada: ${fileUrl}`);
 
         res.json({
             mensaje: 'Archivo subido exitosamente',
@@ -129,7 +185,7 @@ app.post('/upload-diseno', upload.single('archivo'), (req, res) => {
             nombreArchivo: req.file.originalname
         });
     } catch (err) {
-        console.error('❌ Error al subir archivo:', err);
+        logger.error('Error al subir archivo:', err);
         res.status(500).json({ error: err.message });
     }
 });
@@ -255,8 +311,8 @@ app.put('/tareas/preparar-despacho/:id', async (req, res) => {
     const { id } = req.params;
     const { url_foto_paquete } = req.body;
 
-    console.log('📦 Preparar despacho - ID:', id);
-    console.log('📦 URL foto paquete:', url_foto_paquete);
+    logger.debug(`Preparar despacho - ID: ${id}`);
+    logger.debug(`URL foto paquete: ${url_foto_paquete}`);
 
     try {
         const result = await pool.query(
@@ -264,10 +320,10 @@ app.put('/tareas/preparar-despacho/:id', async (req, res) => {
             [url_foto_paquete, id]
         );
 
-        console.log('✅ Resultado:', result.rows[0]);
+        logger.info(`Paquete preparado para tarea ID: ${id}`);
         res.json({ mensaje: "Paquete confirmado. Listo para despacho.", data: result.rows[0] });
     } catch (err) {
-        console.error('❌ Error en preparar-despacho:', err);
+        logger.error('Error en preparar-despacho:', err);
         res.status(500).json({ error: err.message });
     }
 });
@@ -325,11 +381,11 @@ app.put('/tareas/vobo-implementacion/:id', validateVoBoImplementacion, async (re
 
 // Iniciar servidor
 app.listen(PORT, () => {
-    console.log(`
-╔═══════════════════════════════════════╗
-║   🎨 Sistema de Afiches - Backend    ║
-║   Puerto: ${PORT}                         ║
-║   Base de datos: PostgreSQL          ║
-╚═══════════════════════════════════════╝
-    `);
+    logger.info('═══════════════════════════════════════');
+    logger.info('🎨 Sistema de Afiches - Backend');
+    logger.info(`Puerto: ${PORT}`);
+    logger.info('Base de datos: PostgreSQL');
+    logger.info(`Modo: ${process.env.NODE_ENV || 'development'}`);
+    logger.info(`CORS habilitado para: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
+    logger.info('═══════════════════════════════════════');
 });
