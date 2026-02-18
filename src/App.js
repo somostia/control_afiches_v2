@@ -1,33 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Login from './components/login';
 import VistaSupervisor from './components/supervisor_vista';
 import VistaDiseñador from './components/diseñador_vista';
 import VistaDibujante from './components/dibujante_vista';
 import VistaImplementador from './components/implementador_vista';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 
-const App = () => {
-    const [usuario, setUsuario] = useState(null);
-
-    useEffect(() => {
-        // Verificar si hay usuario en localStorage
-        const usuarioGuardado = localStorage.getItem('usuario');
-        if (usuarioGuardado) {
-            setUsuario(JSON.parse(usuarioGuardado));
-        }
-    }, []);
-
-    const handleLoginSuccess = (user) => {
-        setUsuario(user);
-    };
-
-    const handleLogout = () => {
-        localStorage.removeItem('usuario');
-        setUsuario(null);
-    };
+const InnerApp = () => {
+    const { user: usuario, logout } = useAuth();
 
     // Si no hay usuario, mostrar login
     if (!usuario) {
-        return <Login onLoginSuccess={handleLoginSuccess} />;
+        return <Login />;
     }
 
     // Estilos
@@ -152,7 +136,7 @@ const App = () => {
                                             usuario.rol === 'admin' ? 'Administrador' : usuario.rol}
                         </div>
                     </div>
-                    <button onClick={handleLogout} style={logoutButtonStyle}>
+                    <button onClick={logout} style={logoutButtonStyle}>
                         Cerrar Sesión
                     </button>
                 </div>
@@ -164,5 +148,11 @@ const App = () => {
         </div>
     );
 };
+
+const App = () => (
+    <AuthProvider>
+        <InnerApp />
+    </AuthProvider>
+);
 
 export default App;

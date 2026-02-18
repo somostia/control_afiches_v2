@@ -101,7 +101,7 @@ const VistaDibujante = () => {
     const confirmarDespacho = async (id) => {
         try {
             await axios.put(`${API_BASE_URL}/tareas/despacho/${id}`, { estado_logistica: 'en_transito' });
-            alert("Paquete despachado. 📦");
+            alert("Paquete despachado.");
             cargarPendientes();
         } catch (err) {
             alert("Error al confirmar despacho: " + (err.response?.data?.error || err.message));
@@ -112,6 +112,12 @@ const VistaDibujante = () => {
     const verDiseno = (tarea) => {
         if (tarea.url_diseno_referencia) {
             setModalDiseno({ visible: true, url: tarea.url_diseno_referencia, tarea: tarea });
+        }
+    };
+
+    const verFotoPaquete = (tarea) => {
+        if (tarea.url_foto_paquete) {
+            setModalDiseno({ visible: true, url: tarea.url_foto_paquete, tarea: tarea });
         }
     };
 
@@ -148,17 +154,15 @@ const VistaDibujante = () => {
                                         <button
                                             onClick={() => verDiseno(t)}
                                             style={{
-                                                padding: '6px 14px',
+                                                padding: '10px 20px',
                                                 fontSize: '15px',
                                                 backgroundColor: '#e74c3c',
                                                 color: 'white',
                                                 border: 'none',
-                                                borderRadius: '7px',
+                                                borderRadius: '5px',
                                                 cursor: 'pointer',
                                                 fontWeight: 'bold',
-                                                textDecoration: 'none',
-                                                textAlign: 'center',
-                                                display: 'inline-block'
+                                                textDecoration: 'none'
                                             }}
                                         >
                                             Diseño
@@ -179,7 +183,7 @@ const VistaDibujante = () => {
                                             display: 'inline-block'
                                         }}
                                     >
-                                        {uploading === t.id ? '⏳ Subiendo...' : '📁 Subir Archivo'}
+                                        {uploading === t.id ? 'Subiendo...' : 'Subir Archivo'}
                                     </label>
                                     <input
                                         id={`file-${t.id}`}
@@ -206,7 +210,7 @@ const VistaDibujante = () => {
                                             cursor: uploading === t.id ? 'not-allowed' : 'pointer'
                                         }}
                                     >
-                                        🔗 Usar URL
+                                        Usar URL
                                     </button>
                                 </div>
 
@@ -221,13 +225,13 @@ const VistaDibujante = () => {
 
             {/* SECCIÓN 2: PREPARAR DESPACHO */}
             <div style={{ borderTop: '2px solid #ddd', paddingTop: '20px' }}>
-                <h2>📦 Preparar Despacho</h2>
+                <h2>Preparar Despacho</h2>
                 <p style={{ color: '#7f8c8d', marginBottom: '15px' }}>
                     Diseños aprobados. Sube foto del paquete armado para confirmar que está listo para despacho.
                 </p>
                 {aprobados.length === 0 ? (
                     <p style={{ color: '#7f8c8d', padding: '20px', backgroundColor: '#ecf0f1', borderRadius: '8px' }}>
-                        ✅ No hay paquetes pendientes de preparación
+                        No hay paquetes pendientes de preparación
                     </p>
                 ) : (
                     <ul style={{ listStyle: 'none', padding: 0 }}>
@@ -250,7 +254,7 @@ const VistaDibujante = () => {
                                         rel="noreferrer"
                                         style={{ color: '#3498db', textDecoration: 'none' }}
                                     >
-                                        📄 Ver Diseño Aprobado
+                                        Ver Diseño Aprobado
                                     </a>
                                 </div>
 
@@ -267,7 +271,7 @@ const VistaDibujante = () => {
                                             fontWeight: 'bold'
                                         }}
                                     >
-                                        {uploading === t.id ? '⏳ Subiendo...' : '📸 Subir Foto del Paquete'}
+                                        {uploading === t.id ? 'Subiendo...' : 'Subir Foto del Paquete'}
                                     </label>
                                     <input
                                         id={`paquete-${t.id}`}
@@ -281,7 +285,7 @@ const VistaDibujante = () => {
                                 </div>
 
                                 <small style={{ display: 'block', marginTop: '8px', color: '#555' }}>
-                                    📸 Toma una foto del paquete armado listo para despacho
+                                    Toma una foto del paquete armado listo para despacho
                                 </small>
                             </li>
                         ))}
@@ -291,13 +295,13 @@ const VistaDibujante = () => {
 
             {/* SECCIÓN 3: CONFIRMAR DESPACHO */}
             <div style={{ backgroundColor: 'white', borderRadius: '8px', padding: '20px', marginTop: '20px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-                <h2>📦 Confirmar Despacho ({paquetesListos.length})</h2>
+                <h2>Confirmar Despacho ({paquetesListos.length})</h2>
                 <p style={{ color: '#666', marginBottom: '20px' }}>
                     Paquetes listos para envío. Confirma cuando sean despachados al local.
                 </p>
                 {paquetesListos.length === 0 ? (
                     <p style={{ textAlign: 'center', color: '#999', padding: '20px', backgroundColor: '#f8f9fa', borderRadius: '5px' }}>
-                        ✅ No hay paquetes pendientes de despacho
+                        No hay paquetes pendientes de despacho
                     </p>
                 ) : (
                     <ul style={{ listStyle: 'none', padding: 0 }}>
@@ -314,9 +318,21 @@ const VistaDibujante = () => {
                                         <strong>{t.sucursal_nombre}</strong> | {t.tipo_afiche} (x{t.cantidad})
                                         {t.url_foto_paquete && (
                                             <div style={{ marginTop: '8px' }}>
-                                                <a href={t.url_foto_paquete} target="_blank" rel="noreferrer" style={{ color: '#3498db', fontSize: '14px' }}>
-                                                    📸 Ver Foto del Paquete
-                                                </a>
+                                                <button
+                                                    onClick={() => verFotoPaquete(t)}
+                                                    style={{
+                                                        padding: '8px 14px',
+                                                        backgroundColor: '#3498db',
+                                                        color: 'white',
+                                                        border: 'none',
+                                                        borderRadius: '6px',
+                                                        cursor: 'pointer',
+                                                        fontWeight: 'bold',
+                                                        fontSize: '14px'
+                                                    }}
+                                                >
+                                                    Ver Foto del Paquete
+                                                </button>
                                             </div>
                                         )}
                                     </div>
@@ -333,7 +349,7 @@ const VistaDibujante = () => {
                                             fontSize: '16px'
                                         }}
                                     >
-                                        🚚 Confirmar Despacho
+                                        Confirmar Despacho
                                     </button>
                                 </div>
                             </li>

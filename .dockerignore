@@ -1,0 +1,59 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+
+# Testing
+coverage/
+.nyc_output/
+
+# Production
+build/
+dist/
+
+# Misc
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Git
+.git/
+.gitignore
+
+# Docker
+.dockerignore
+Dockerfile
+docker-compose*.yml
+
+# Documentación
+*.md
+README*
+DEPLOY*
+MOBILE*
+
+# Scripts de deploy locales
+deploy.sh
+setup.sh
+ecosystem.config.js
+
+# Backups
+*.backup
+package-backup.json
+
+# Logs
+logs/
+
+# Test files
+test-*.json

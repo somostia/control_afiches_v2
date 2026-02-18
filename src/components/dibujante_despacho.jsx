@@ -27,7 +27,7 @@ const ModuloDespacho = () => {
                     <span><strong>{t.sucursal_nombre}</strong> ({t.tipo_afiche})</span>
                     <span>Estado actual: {t.estado_logistica}</span>
                     <button onClick={() => despachar(t.id)} disabled={t.estado_logistica === 'en_transito'}>
-                        {t.estado_logistica === 'en_transito' ? '🚚 En Camión' : '📦 Enviar al Transporte'}
+                        {t.estado_logistica === 'en_transito' ? 'En Camión' : 'Enviar al Transporte'}
                     </button>
                 </div>
             ))}

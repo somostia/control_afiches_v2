@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import API_BASE_URL from '../config';
+import api from '../api';
 
 const FormularioDisenador = () => {
     const [nombreCampana, setNombreCampana] = useState('');
@@ -12,7 +11,7 @@ const FormularioDisenador = () => {
     useEffect(() => {
         const cargarSucursales = async () => {
             try {
-                const res = await axios.get(`${API_BASE_URL}/sucursales`);
+                const res = await api.get('/sucursales');
                 setSucursales(res.data);
             } catch (err) {
                 console.error('Error al cargar sucursales:', err);
@@ -44,7 +43,7 @@ const FormularioDisenador = () => {
                 disenador_id: 1, // ID fijo por ahora para pruebas
                 tareas: tareas
             };
-            const res = await axios.post(`${API_BASE_URL}/campanas`, datos);
+            const res = await api.post('/campanas', datos);
             alert("Campaña creada con éxito. ID: " + res.data.id);
         } catch (err) {
             console.error(err);

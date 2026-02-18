@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import API_BASE_URL from '../config';
+import api from '../api';
+import { useAuth } from '../contexts/AuthContext';
 
 const VistaDiseñador = () => {
-    // Estado para el formulario de campaña
+    const { user } = useAuth();
+
+    // Estados generales
     const [nombreCampana, setNombreCampana] = useState('');
     const [tareas, setTareas] = useState([{ local: '', tipo: '', cantidad: 1 }]);
     const [disenoReferencia, setDisenoReferencia] = useState('');
@@ -11,90 +13,112 @@ const VistaDiseñador = () => {
     const [sucursales, setSucursales] = useState([]);
     const [cargandoSucursales, setCargandoSucursales] = useState(false);
 
-    // Estado para VoBo de dibujo
+    // Estados de revisión
     const [pendientesDiseno, setPendientesDiseno] = useState([]);
-
-    // Estado para VoBo de implementación
     const [pendientesImplementacion, setPendientesImplementacion] = useState([]);
 
-    // Estado para modales
+    // Estados de modales
     const [modalFoto, setModalFoto] = useState({ visible: false, url: '', tarea: null });
     const [modalDiseno, setModalDiseno] = useState({ visible: false, url: '', tarea: null });
 
     // Cargar revisiones pendientes
     const cargarRevisiones = async () => {
-        const res = await axios.get(`${API_BASE_URL}/dashboard`);
+        const res = await api.get('/dashboard');
 
-        // Filtramos tareas que tienen link de diseño pero aún no tienen VoBo
         setPendientesDiseno(res.data.filter(t => t.url_diseno_archivo && !t.vobo_diseno_ok));
-
-        // Filtramos tareas implementadas que necesitan VoBo de implementación
-        setPendientesImplementacion(res.data.filter(t =>
-            t.vobo_diseno_ok &&
-            t.foto_evidencia_url &&
-            !t.vobo_impl_ok
-        ));
+        setPendientesImplementacion(
+            res.data.filter(t => t.vobo_diseno_ok && t.foto_evidencia_url && !t.vobo_impl_ok)
+        );
     };
 
-    useEffect(() => { cargarRevisiones(); }, []);
+    useEffect(() => {
+        cargarRevisiones();
+    }, []);
 
-    // Cargar sucursales cuando se abre el formulario
     const cargarSucursales = async () => {
         setCargandoSucursales(true);
         try {
-            const res = await axios.get(`${API_BASE_URL}/sucursales`);
+            const res = await api.get('/sucursales');
             setSucursales(res.data);
         } catch (err) {
-            console.error('Error al cargar sucursales:', err);
-            alert('No se pudieron cargar las sucursales');
+            console.error(err);
+            alert('Error al cargar sucursales');
         } finally {
             setCargandoSucursales(false);
         }
     };
 
-    // Funciones para el formulario de campaña
+    const manejarCambioTarea = (index, e) => {
+        const { name, value } = e.target;
+        const nuevasTareas = [...tareas];
+        nuevasTareas[index] = { ...nuevasTareas[index], [name]: value };
+        setTareas(nuevasTareas);
+    };
+
     const agregarFila = () => {
         setTareas([...tareas, { local: '', tipo: '', cantidad: 1 }]);
     };
 
-    const manejarCambioTarea = (index, e) => {
-        const nuevasTareas = [...tareas];
-        nuevasTareas[index][e.target.name] = e.target.value;
-        setTareas(nuevasTareas);
-    };
-
-    const subirDisenoReferencia = async (event) => {
-        const file = event.target.files[0];
+    const subirDisenoReferencia = async (e) => {
+        const file = e.target.files?.[0];
         if (!file) return;
 
         try {
             const formData = new FormData();
             formData.append('archivo', file);
 
-            const uploadRes = await axios.post(`${API_BASE_URL}/upload-diseno`, formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
-                }
+            const uploadRes = await api.post('/upload-diseno', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
             });
 
-            setDisenoReferencia(uploadRes.data.url);
-            alert('Diseño de referencia subido correctamente');
+            if (uploadRes.data?.url) {
+                setDisenoReferencia(uploadRes.data.url);
+            }
+            alert('Archivo de referencia subido correctamente');
         } catch (err) {
-            alert('Error al subir el archivo: ' + (err.response?.data?.error || err.message));
+            console.error(err);
+            alert('Error al subir archivo de referencia');
         }
     };
 
     const enviarCampana = async (e) => {
         e.preventDefault();
         try {
+            // Priorizar usuario de localStorage
+            let disenadorId = null;
+            const usuarioLocal = localStorage.getItem('usuario');
+
+            if (usuarioLocal) {
+                try {
+                    const usuarioParsed = JSON.parse(usuarioLocal);
+                    disenadorId = usuarioParsed.id;
+                    console.log('✓ Usando usuario de localStorage:', usuarioParsed);
+                } catch (err) {
+                    console.error('Error parsing localStorage usuario:', err);
+                }
+            }
+
+            // Fallback al contexto de auth
+            if (!disenadorId) {
+                disenadorId = user?.id;
+                console.log('Fallback a useAuth context, user:', user);
+            }
+
+            // Último recurso
+            if (!disenadorId) {
+                disenadorId = 1;
+                console.warn('No se pudo obtener disenador_id, usando fallback 1');
+            }
+
             const datos = {
                 nombre: nombreCampana,
-                disenador_id: 1,
-                tareas: tareas,
+                disenador_id: disenadorId,
+                tareas,
                 url_diseno_referencia: disenoReferencia
             };
-            const res = await axios.post(`${API_BASE_URL}/campanas`, datos);
-            alert("Campaña creada con éxito. ID: " + res.data.id);
+
+            const res = await api.post('/campanas', datos);
+            alert('Campaña creada con éxito. ID: ' + res.data.id);
             setNombreCampana('');
             setTareas([{ local: '', tipo: '', cantidad: 1 }]);
             setDisenoReferencia('');
@@ -102,47 +126,41 @@ const VistaDiseñador = () => {
             cargarRevisiones();
         } catch (err) {
             console.error(err);
-            alert("Error al crear campaña");
+            alert('Error al crear campaña: ' + (err.response?.data?.error || err.message));
         }
     };
 
     // Funciones para modales
     const verFoto = (tarea, url) => {
         if (url) {
-            setModalFoto({ visible: true, url: url, tarea: tarea });
+            setModalFoto({ visible: true, url, tarea });
         }
     };
 
     const verDiseno = (tarea) => {
         if (tarea.url_diseno_archivo) {
-            setModalDiseno({ visible: true, url: tarea.url_diseno_archivo, tarea: tarea });
+            setModalDiseno({ visible: true, url: tarea.url_diseno_archivo, tarea });
         }
     };
 
-    const cerrarModalFoto = () => {
-        setModalFoto({ visible: false, url: '', tarea: null });
-    };
+    const cerrarModalFoto = () => setModalFoto({ visible: false, url: '', tarea: null });
+    const cerrarModalDiseno = () => setModalDiseno({ visible: false, url: '', tarea: null });
 
-    const cerrarModalDiseno = () => {
-        setModalDiseno({ visible: false, url: '', tarea: null });
-    };
-
-    // Funciones para VoBo de diseño
+    // Funciones para VoBo
     const darVoBoDiseno = async (id, aprobado) => {
-        await axios.put(`${API_BASE_URL}/tareas/vobo-diseno/${id}`, { aprobado });
-        alert(aprobado ? "Diseño aprobado. Listo para producción." : "Diseño rechazado.");
+        await api.put(`/tareas/vobo-diseno/${id}`, { aprobado });
+        alert(aprobado ? 'Diseño aprobado. Listo para producción.' : 'Diseño rechazado.');
         cargarRevisiones();
     };
 
-    // Funciones para VoBo de implementación
     const darVoBoImplementacion = async (id, aprobado) => {
         try {
-            await axios.put(`${API_BASE_URL}/tareas/vobo-implementacion/${id}`, { aprobado });
-            alert(aprobado ? "Implementación aprobada. ✅" : "Implementación rechazada. ❌");
+            await api.put(`/tareas/vobo-implementacion/${id}`, { aprobado });
+            alert(aprobado ? 'Implementación aprobada.' : 'Implementación rechazada.');
             cargarRevisiones();
         } catch (err) {
             console.error(err);
-            alert("Error al dar VoBo de implementación");
+            alert('Error al dar VoBo de implementación');
         }
     };
 
@@ -285,7 +303,7 @@ const VistaDiseñador = () => {
                                             name="cantidad"
                                             type="number"
                                             min="1"
-                                            defaultValue="1"
+                                            value={tarea.cantidad}
                                             onChange={(e) => manejarCambioTarea(index, e)}
                                             style={{ width: '80px', padding: '8px' }}
                                         />
@@ -342,24 +360,17 @@ const VistaDiseñador = () => {
                                             onClick={() => verDiseno(t)}
                                             style={{
                                                 padding: '10px 20px',
-                                                fontSize: '16px',
+                                                fontSize: '15px',
                                                 backgroundColor: '#f39c12',
                                                 color: 'white',
                                                 border: 'none',
-                                                borderRadius: '8px',
+                                                borderRadius: '5px',
                                                 cursor: 'pointer',
                                                 fontWeight: 'bold',
-                                                maxWidth: '200px',
-                                                textDecoration: 'none',
-                                                textAlign: 'center',
-                                                display: 'block',
-                                                boxShadow: '0 2px 6px rgba(243, 156, 18, 0.3)',
-                                                transition: 'all 0.2s ease'
+                                                textDecoration: 'none'
                                             }}
-                                            onMouseEnter={(e) => e.target.style.backgroundColor = '#e67e22'}
-                                            onMouseLeave={(e) => e.target.style.backgroundColor = '#f39c12'}
                                         >
-                                            🎨 Ver Diseño
+                                            Ver Diseño
                                         </button>
                                     )}
                                 </div>
@@ -415,45 +426,34 @@ const VistaDiseñador = () => {
                                             onClick={() => verDiseno(t)}
                                             style={{
                                                 padding: '10px 20px',
-                                                fontSize: '16px',
+                                                fontSize: '15px',
                                                 backgroundColor: '#f39c12',
                                                 color: 'white',
                                                 border: 'none',
-                                                borderRadius: '8px',
+                                                borderRadius: '5px',
                                                 cursor: 'pointer',
                                                 fontWeight: 'bold',
-                                                maxWidth: '200px',
-                                                textDecoration: 'none',
-                                                textAlign: 'center',
-                                                display: 'block',
-                                                boxShadow: '0 2px 6px rgba(243, 156, 18, 0.3)',
-                                                transition: 'all 0.2s ease'
+                                                textDecoration: 'none'
                                             }}
-                                            onMouseEnter={(e) => e.target.style.backgroundColor = '#e67e22'}
-                                            onMouseLeave={(e) => e.target.style.backgroundColor = '#f39c12'}
                                         >
-                                            🎨 Ver Diseño
+                                            Ver Diseño
                                         </button>
                                     )}
                                     {t.foto_evidencia_url && (
                                         <button
                                             onClick={() => verFoto(t, t.foto_evidencia_url)}
                                             style={{
-                                                padding: '6px 14px',
+                                                padding: '10px 20px',
                                                 fontSize: '15px',
                                                 backgroundColor: '#27ae60',
                                                 color: 'white',
                                                 border: 'none',
-                                                borderRadius: '7px',
+                                                borderRadius: '5px',
                                                 cursor: 'pointer',
-                                                fontWeight: 'bold',
-                                                flex: 1,
-                                                textDecoration: 'none',
-                                                textAlign: 'center',
-                                                display: 'block'
+                                                fontWeight: 'bold'
                                             }}
                                         >
-                                            Sucursal
+                                            Implementación
                                         </button>
                                     )}
                                 </div>

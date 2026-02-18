@@ -37,10 +37,10 @@ const PanelAdministrador = () => {
     return (
         <div>
             <nav style={menuStyle}>
-                <button style={buttonStyle('supervisor')} onClick={() => setVistaActiva('supervisor')}>📊 Supervisor</button>
-                <button style={buttonStyle('disenador')} onClick={() => setVistaActiva('disenador')}>✍️ Diseñador</button>
-                <button style={buttonStyle('dibujante')} onClick={() => setVistaActiva('dibujante')}>🎨 Dibujante</button>
-                <button style={buttonStyle('implementador')} onClick={() => setVistaActiva('implementador')}>📱 Implementador</button>
+                <button style={buttonStyle('supervisor')} onClick={() => setVistaActiva('supervisor')}>Supervisor</button>
+                <button style={buttonStyle('disenador')} onClick={() => setVistaActiva('disenador')}>Diseñador</button>
+                <button style={buttonStyle('dibujante')} onClick={() => setVistaActiva('dibujante')}>Dibujante</button>
+                <button style={buttonStyle('implementador')} onClick={() => setVistaActiva('implementador')}>Implementador</button>
             </nav>
 
             <div style={{ padding: '20px' }}>

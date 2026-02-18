@@ -103,7 +103,13 @@ app.use(cors({
     credentials: true
 }));
 app.use(express.json());
-app.use('/uploads', express.static(uploadsDir));
+// Servir uploads con cabeceras CORS permisivas para evitar bloqueos de Same-Origin
+app.use('/uploads', express.static(uploadsDir, {
+    setHeaders: (res) => {
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    }
+}));
 
 // Ruta de login
 app.post('/login', loginLimiter, async (req, res) => {
@@ -116,7 +122,7 @@ app.post('/login', loginLimiter, async (req, res) => {
 
     try {
         const resultado = await pool.query(
-            'SELECT id, nombre, usuario, rol, sucursal_asignada, password FROM usuarios WHERE usuario = $1',
+            'SELECT id, nombre, usuario, rol, sucursal_id, password FROM usuarios WHERE usuario = $1',
             [usuario]
         );
 
@@ -194,6 +200,8 @@ app.post('/upload-diseno', upload.single('archivo'), (req, res) => {
 app.post('/campanas', validateCampana, async (req, res) => {
     const { nombre, disenador_id, tareas, url_diseno_referencia } = req.body;
     try {
+        logger.info(`Creando campaña: ${nombre}`, { disenador_id, tareas });
+
         // Creamos la campaña
         const nuevaCampana = await pool.query(
             "INSERT INTO campanas (nombre, disenador_id) VALUES ($1, $2) RETURNING id",
@@ -205,13 +213,15 @@ app.post('/campanas', validateCampana, async (req, res) => {
         // Insertamos los locales y afiches (tareas) vinculados a esa campaña
         for (let tarea of tareas) {
             await pool.query(
-                "INSERT INTO tareas_implementacion (campana_id, sucursal_nombre, tipo_afiche, cantidad, url_diseno_referencia) VALUES ($1, $2, $3, $4, $5)",
+                "INSERT INTO tareas_implementacion (campana_id, sucursal_nombre, tipo_afiche, cantidad, url_diseno_archivo) VALUES ($1, $2, $3, $4, $5)",
                 [campanaId, tarea.local, tarea.tipo, tarea.cantidad, url_diseno_referencia || null]
             );
         }
 
+        logger.info(`Campaña creada exitosamente: ${campanaId}`);
         res.json({ mensaje: "Campaña y tareas creadas con éxito", id: campanaId });
     } catch (err) {
+        logger.error(`Error al crear campaña: ${err.message}`, { stack: err.stack });
         res.status(500).json({ error: err.message });
     }
 });

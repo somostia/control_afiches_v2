@@ -173,18 +173,14 @@ const VistaImplementador = ({ usuario }) => {
                                         <button
                                             onClick={() => verPaquete(t)}
                                             style={{
-                                                padding: '6px 14px',
+                                                padding: '10px 20px',
                                                 fontSize: '15px',
                                                 backgroundColor: '#f39c12',
                                                 color: 'white',
                                                 border: 'none',
-                                                borderRadius: '7px',
+                                                borderRadius: '5px',
                                                 cursor: 'pointer',
-                                                fontWeight: 'bold',
-                                                flex: 1,
-                                                textDecoration: 'none',
-                                                textAlign: 'center',
-                                                display: 'block'
+                                                fontWeight: 'bold'
                                             }}
                                         >
                                             Paquete
@@ -194,18 +190,14 @@ const VistaImplementador = ({ usuario }) => {
                                         <button
                                             onClick={() => verSucursal(t)}
                                             style={{
-                                                padding: '6px 14px',
+                                                padding: '10px 20px',
                                                 fontSize: '15px',
                                                 backgroundColor: '#27ae60',
                                                 color: 'white',
                                                 border: 'none',
-                                                borderRadius: '7px',
+                                                borderRadius: '5px',
                                                 cursor: 'pointer',
-                                                fontWeight: 'bold',
-                                                flex: 1,
-                                                textDecoration: 'none',
-                                                textAlign: 'center',
-                                                display: 'block'
+                                                fontWeight: 'bold'
                                             }}
                                         >
                                             Sucursal
@@ -226,7 +218,7 @@ const VistaImplementador = ({ usuario }) => {
                                                 fontWeight: 'bold'
                                             }}
                                         >
-                                            📦 Confirmar Recepción de Camión
+                                            Confirmar Recepción de Camión
                                         </button>
                                     ) : t.foto_evidencia_url ? (
                                         <div style={{
@@ -238,7 +230,7 @@ const VistaImplementador = ({ usuario }) => {
                                             color: '#856404',
                                             fontWeight: 'bold'
                                         }}>
-                                            ⏳ En espera de VoBo de Implementación
+                                            En espera de VoBo de Implementación
                                         </div>
                                     ) : (
                                         <button
@@ -253,7 +245,7 @@ const VistaImplementador = ({ usuario }) => {
                                                 fontWeight: 'bold'
                                             }}
                                         >
-                                            📸 Subir Foto e Instalar
+                                            Subir Foto e Instalar
                                         </button>
                                     )}
                                 </div>
@@ -301,7 +293,7 @@ const VistaImplementador = ({ usuario }) => {
                                     fontWeight: 'bold'
                                 }}
                             >
-                                {uploading ? '⏳ Subiendo...' : '📁 Seleccionar Archivo'}
+                                {uploading ? 'Subiendo...' : 'Seleccionar Archivo'}
                             </label>
                             <input
                                 id="foto-archivo"

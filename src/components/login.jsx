@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import axios from 'axios';
-import API_BASE_URL from '../config';
+import { useAuth } from '../contexts/AuthContext';
 
-const Login = ({ onLoginSuccess }) => {
+const Login = () => {
+    const { login } = useAuth();
     const [usuario, setUsuario] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -14,18 +14,9 @@ const Login = ({ onLoginSuccess }) => {
         setLoading(true);
 
         try {
-            const response = await axios.post(`${API_BASE_URL}/login`, {
-                usuario,
-                password
-            });
-
-            // Guardar usuario en localStorage
-            localStorage.setItem('usuario', JSON.stringify(response.data.usuario));
-
-            // Llamar callback de éxito
-            onLoginSuccess(response.data.usuario);
+            await login({ usuario, password });
         } catch (err) {
-            setError(err.response?.data?.error || 'Error al iniciar sesión');
+            setError(err.response?.data?.error || err.message || 'Error al iniciar sesión');
         } finally {
             setLoading(false);
         }

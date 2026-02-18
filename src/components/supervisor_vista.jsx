@@ -67,30 +67,30 @@ const VistaSupervisor = () => {
     // Determinar el siguiente paso pendiente
     const getSiguientePaso = (tarea) => {
         if (tarea.vobo_impl_ok) {
-            return { texto: 'Completado', icono: '✅', color: '#27ae60' };
+            return { texto: 'Completado', icono: '', color: '#27ae60' };
         }
         if (tarea.foto_evidencia_url && !tarea.vobo_impl_ok) {
-            return { texto: 'Aprobar Impl.', icono: '👨‍💼', color: '#e67e22' };
+            return { texto: 'Aprobar Impl.', icono: '', color: '#e67e22' };
         }
         if (tarea.estado_logistica === 'recibido' && !tarea.foto_evidencia_url) {
-            return { texto: 'Subir Foto', icono: '📸', color: '#e67e22' };
+            return { texto: 'Subir Foto', icono: '', color: '#e67e22' };
         }
         if (tarea.estado_logistica === 'en_transito') {
-            return { texto: 'Recibir', icono: '📦', color: '#3498db' };
+            return { texto: 'Recibir', icono: '', color: '#3498db' };
         }
         if (tarea.foto_paquete_url && !tarea.estado_logistica) {
-            return { texto: 'Despachar', icono: '🚚', color: '#3498db' };
+            return { texto: 'Despachar', icono: '', color: '#3498db' };
         }
         if (tarea.vobo_diseno_ok && !tarea.foto_paquete_url) {
-            return { texto: 'Preparar Paquete', icono: '📦', color: '#f39c12' };
+            return { texto: 'Preparar Paquete', icono: '', color: '#f39c12' };
         }
         if (tarea.url_diseno_archivo && !tarea.vobo_diseno_ok) {
-            return { texto: 'Aprobar Diseño', icono: '👨‍🎨', color: '#9b59b6' };
+            return { texto: 'Aprobar Diseño', icono: '', color: '#9b59b6' };
         }
         if (!tarea.url_diseno_archivo) {
-            return { texto: 'Dibujar', icono: '🎨', color: '#e74c3c' };
+            return { texto: 'Dibujar', icono: '', color: '#e74c3c' };
         }
-        return { texto: 'En Proceso', icono: '⏳', color: '#95a5a6' };
+        return { texto: 'En Proceso', icono: '', color: '#95a5a6' };
     };
 
     // Abrir modal con foto de implementación
@@ -179,9 +179,9 @@ const VistaSupervisor = () => {
                                 </h3>
                                 <p style={{ margin: '5px 0 0 0', fontSize: '14px', color: '#7f8c8d' }}>
                                     Total: {totalTareas} tareas |
-                                    <span style={{ color: '#27ae60', fontWeight: 'bold' }}> ✓ {completadas}</span> |
-                                    <span style={{ color: '#f39c12', fontWeight: 'bold' }}> ⏳ {enProceso}</span> |
-                                    <span style={{ color: '#e74c3c', fontWeight: 'bold' }}> ⭕ {pendientes}</span>
+                                    <span style={{ color: '#27ae60', fontWeight: 'bold' }}> Completadas: {completadas}</span> |
+                                    <span style={{ color: '#f39c12', fontWeight: 'bold' }}> En proceso: {enProceso}</span> |
+                                    <span style={{ color: '#e74c3c', fontWeight: 'bold' }}> Pendientes: {pendientes}</span>
                                 </p>
                             </div>
                         </div>
@@ -203,14 +203,14 @@ const VistaSupervisor = () => {
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '8px' }}>
                                             <div style={{ flex: 1 }}>
                                                 <p style={{ margin: 0, fontWeight: 'bold', fontSize: '15px', color: '#2c3e50' }}>
-                                                    📍 {tarea.sucursal_nombre}
+                                                    {tarea.sucursal_nombre}
                                                 </p>
                                                 <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: '4px', flexWrap: 'nowrap' }}>
                                                     <p style={{ margin: 0, fontSize: '13px', color: '#555', whiteSpace: 'nowrap' }}>
                                                         <strong>Tipo:</strong> {tarea.tipo_afiche} | <strong>Cant:</strong> {tarea.cantidad}
                                                     </p>
                                                     <p style={{ margin: 0, fontSize: '13px', color: siguientePaso.color, fontWeight: 'bold', whiteSpace: 'nowrap' }}>
-                                                        {siguientePaso.icono} {siguientePaso.texto}
+                                                        {siguientePaso.texto}
                                                     </p>
                                                 </div>
                                             </div>
@@ -228,8 +228,8 @@ const VistaSupervisor = () => {
                                                     }}>
                                                         {etapa}
                                                     </span>
-                                                    <span style={{ fontSize: '20px' }}>
-                                                        {colorClase === 'verde' ? '✅' : colorClase === 'amarillo' ? '⏳' : '⭕'}
+                                                    <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#555' }}>
+                                                        {colorClase === 'verde' ? 'OK' : colorClase === 'amarillo' ? 'En proceso' : 'Pendiente'}
                                                     </span>
                                                 </div>
                                             )}
@@ -240,15 +240,14 @@ const VistaSupervisor = () => {
                                                     <button
                                                         onClick={() => verDisenoReferencia(tarea)}
                                                         style={{
-                                                            padding: '6px 14px',
+                                                            padding: '10px 20px',
                                                             fontSize: '15px',
                                                             backgroundColor: '#e74c3c',
                                                             color: 'white',
                                                             border: 'none',
-                                                            borderRadius: '7px',
+                                                            borderRadius: '5px',
                                                             cursor: 'pointer',
-                                                            fontWeight: 'bold',
-                                                            flex: 1
+                                                            fontWeight: 'bold'
                                                         }}
                                                     >
                                                         Diseño
@@ -258,15 +257,14 @@ const VistaSupervisor = () => {
                                                     <button
                                                         onClick={() => verDiseno(tarea)}
                                                         style={{
-                                                            padding: '6px 14px',
+                                                            padding: '10px 20px',
                                                             fontSize: '15px',
                                                             backgroundColor: '#f39c12',
                                                             color: 'white',
                                                             border: 'none',
-                                                            borderRadius: '7px',
+                                                            borderRadius: '5px',
                                                             cursor: 'pointer',
-                                                            fontWeight: 'bold',
-                                                            flex: 1
+                                                            fontWeight: 'bold'
                                                         }}
                                                     >
                                                         Afiche
@@ -276,18 +274,17 @@ const VistaSupervisor = () => {
                                                     <button
                                                         onClick={() => verFotoImplementacion(tarea)}
                                                         style={{
-                                                            padding: '6px 14px',
+                                                            padding: '10px 20px',
                                                             fontSize: '15px',
                                                             backgroundColor: '#27ae60',
                                                             color: 'white',
                                                             border: 'none',
-                                                            borderRadius: '7px',
+                                                            borderRadius: '5px',
                                                             cursor: 'pointer',
-                                                            fontWeight: 'bold',
-                                                            flex: 1
+                                                            fontWeight: 'bold'
                                                         }}
                                                     >
-                                                        Sucursal
+                                                        Implementación
                                                     </button>
                                                 )}
                                             </div>
