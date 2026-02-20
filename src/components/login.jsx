@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import API_BASE_URL from '../config';
 
 const Login = () => {
     const { login } = useAuth();
@@ -166,33 +167,12 @@ const Login = () => {
                     maxHeight: '300px',
                     overflowY: 'auto'
                 }}>
-                    <strong>Usuarios de prueba:</strong>
-                    <ul style={{ margin: '10px 0 0 0', paddingLeft: '20px' }}>
-                        <li>admin / admin</li>
-                        <li>disenador / disenador</li>
-                        <li>dibujante / dibujante</li>
-                        <li>supervisor / supervisor</li>
-                    </ul>
-                    <strong style={{ marginTop: '10px', display: 'block' }}>Implementadores (18 sucursales):</strong>
-                    <ul style={{ margin: '5px 0 0 0', paddingLeft: '20px', fontSize: '11px' }}>
-                        <li>impl_sf / impl_sf (San Fernando)</li>
-                        <li>impl_rengo / impl_rengo (Rengo)</li>
-                        <li>impl_cabras / impl_cabras (Las Cabras)</li>
-                        <li>impl_coltauco / impl_coltauco (Coltauco)</li>
-                        <li>impl_requinoa / impl_requinoa (Requinoa)</li>
-                        <li>impl_chepica / impl_chepica (Chépica)</li>
-                        <li>impl_peralillo / impl_peralillo (Peralillo)</li>
-                        <li>impl_pich / impl_pich (Pichilemu)</li>
-                        <li>impl_hualane / impl_hualane (Hualañé)</li>
-                        <li>impl_tilcoco / impl_tilcoco (Quinta de Tilcoco)</li>
-                        <li>impl_nancagua / impl_nancagua (Nancagua)</li>
-                        <li>impl_chanco / impl_chanco (Chanco)</li>
-                        <li>impl_valegre / impl_valegre (Villa Alegre)</li>
-                        <li>impl_colbun / impl_colbun (Colbún)</li>
-                        <li>impl_teno / impl_teno (Teno)</li>
-                        <li>impl_ybuenas / impl_ybuenas (Yerbas Buenas)</li>
-                        <li>impl_longavi / impl_longavi (Longaví)</li>
-                        <li>impl_maule / impl_maule (Maule)</li>
+                    <p style={{ margin: '0 0 8px 0', fontWeight: 'bold', color: '#2c3e50' }}>Ayuda rápida</p>
+                    <ul style={{ paddingLeft: '18px', margin: 0, lineHeight: 1.5 }}>
+                        <li>API objetivo: {API_BASE_URL}</li>
+                        <li>Si no tienes credenciales, solicita acceso al administrador.</li>
+                        <li>Comprueba que el backend responda en /api/health antes de iniciar sesión.</li>
+                        <li>Errores comunes: usuario/contraseña vacíos o URL del backend incorrecta.</li>
                     </ul>
                 </div>
             </div>

@@ -103,6 +103,28 @@ npm start
 ```
 La aplicación estará disponible en `http://localhost:3000`
 
+## Comandos rápidos
+
+Backend (en carpeta `backend`):
+- `npm run start` inicia en modo normal.
+- `npm run dev` inicia con recarga (nodemon).
+- `npm run help` muestra comandos, variables y endpoints clave.
+
+Frontend (en raíz del proyecto):
+- `npm start` arranca desarrollo (usa `REACT_APP_API_URL`).
+- `npm run build` genera el bundle de producción.
+
+## Variables de entorno clave
+
+Backend (.env en raíz del proyecto):
+- `PORT` puerto del backend (ej. 3002).
+- `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` configuración de Postgres.
+- `FRONTEND_URL` origen permitido para CORS.
+
+Frontend (.env en raíz del proyecto):
+- `REACT_APP_API_URL` URL base del backend que consumirá el bundle.
+- `FRONTEND_PORT` puerto expuesto del contenedor frontend (si usas docker-compose).
+
 ## �📁 Estructura del Proyecto
 
 ```
