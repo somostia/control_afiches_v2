@@ -11,12 +11,14 @@ require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
 const pool = require('./db');
 const {
+    validateLogin,
     validateCampana,
     validateDiseno,
     validateVoBo,
     validateLogistica,
     validateImplementacion,
-    validateVoBoImplementacion
+    validateVoBoImplementacion,
+    validateUploadArchivo
 } = require('./validators');
 
 // Configurar Winston Logger
@@ -112,7 +114,7 @@ app.use('/uploads', express.static(uploadsDir, {
 }));
 
 // Ruta de login
-app.post('/login', loginLimiter, async (req, res) => {
+app.post('/login', validateLogin, loginLimiter, async (req, res) => {
     const { usuario, password } = req.body;
 
     if (!usuario || !password) {
@@ -168,7 +170,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // Ruta para subir archivo de diseño
-app.post('/upload-diseno', upload.single('archivo'), (req, res) => {
+app.post('/upload-diseno', upload.single('archivo'), validateUploadArchivo, (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ error: 'No se recibió ningún archivo' });

@@ -8,6 +8,19 @@ const VistaDibujante = () => {
     const [paquetesListos, setPaquetesListos] = useState([]);
     const [uploading, setUploading] = useState(null);
 
+    const validarArchivo = (file) => {
+        const permitido = /\.(jpe?g|png|pdf|ai|psd)$/i;
+        if (!permitido.test(file.name)) {
+            return 'Formato no soportado. Usa JPG, PNG, PDF, AI o PSD';
+        }
+        if (file.size > 10 * 1024 * 1024) {
+            return 'El archivo supera 10MB. Comprime o reduce la resolución';
+        }
+        return null;
+    };
+
+    const urlValida = (url) => /^https?:\/\//i.test(url.trim());
+
     // Estado para modal
     const [modalDiseno, setModalDiseno] = useState({ visible: false, url: '', tarea: null });
 
@@ -25,14 +38,19 @@ const VistaDibujante = () => {
 
     const subirDesdeURL = async (id) => {
         const url = prompt("Introduce el link del diseño (Drive/Dropbox/Cloudinary):");
-        if (url) {
-            try {
-                await axios.put(`${API_BASE_URL}/tareas/dibujo/${id}`, { url_diseno: url });
-                alert("Enviado a Visto Bueno del Diseñador");
-                cargarPendientes();
-            } catch (err) {
-                alert("Error al subir el diseño: " + (err.response?.data?.error || err.message));
-            }
+        if (!url) return;
+
+        if (!urlValida(url)) {
+            alert('URL inválida. Usa un enlace que comience con http(s)');
+            return;
+        }
+
+        try {
+            await axios.put(`${API_BASE_URL}/tareas/dibujo/${id}`, { url_diseno: url.trim() });
+            alert("Enviado a Visto Bueno del Diseñador");
+            cargarPendientes();
+        } catch (err) {
+            alert("Error al subir el diseño: " + (err.response?.data?.error || err.message));
         }
     };
 
@@ -40,10 +58,16 @@ const VistaDibujante = () => {
         const file = event.target.files[0];
         if (!file) return;
 
+        const errorArchivo = validarArchivo(file);
+        if (errorArchivo) {
+            alert(errorArchivo);
+            event.target.value = '';
+            return;
+        }
+
         setUploading(id);
 
         try {
-            // Primero subir el archivo
             const formData = new FormData();
             formData.append('archivo', file);
 
@@ -53,7 +77,6 @@ const VistaDibujante = () => {
                 }
             });
 
-            // Luego actualizar la tarea con la URL del archivo
             await axios.put(`${API_BASE_URL}/tareas/dibujo/${id}`, {
                 url_diseno: uploadRes.data.url
             });
@@ -71,10 +94,16 @@ const VistaDibujante = () => {
         const file = event.target.files[0];
         if (!file) return;
 
+        const errorArchivo = validarArchivo(file);
+        if (errorArchivo) {
+            alert(errorArchivo);
+            event.target.value = '';
+            return;
+        }
+
         setUploading(id);
 
         try {
-            // Subir el archivo
             const formData = new FormData();
             formData.append('archivo', file);
 
@@ -84,7 +113,6 @@ const VistaDibujante = () => {
                 }
             });
 
-            // Actualizar el estado de logística con la foto del paquete
             await axios.put(`${API_BASE_URL}/tareas/preparar-despacho/${id}`, {
                 url_foto_paquete: uploadRes.data.url
             });

@@ -12,10 +12,25 @@ const Login = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+
+        const trimmedUsuario = usuario.trim();
+        const trimmedPassword = password.trim();
+
+        const clientErrors = [];
+        if (!trimmedUsuario) clientErrors.push('Ingresa tu usuario (ej: jdoe)');
+        if (trimmedUsuario.length < 3) clientErrors.push('El usuario debe tener al menos 3 caracteres');
+        if (!trimmedPassword) clientErrors.push('Ingresa tu contraseña');
+        if (trimmedPassword.length < 6) clientErrors.push('La contraseña debe tener al menos 6 caracteres');
+
+        if (clientErrors.length > 0) {
+            setError(clientErrors.join(' · '));
+            return;
+        }
+
         setLoading(true);
 
         try {
-            await login({ usuario, password });
+            await login({ usuario: trimmedUsuario, password: trimmedPassword });
         } catch (err) {
             setError(err.response?.data?.error || err.message || 'Error al iniciar sesión');
         } finally {

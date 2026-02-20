@@ -12,6 +12,7 @@ const VistaDiseñador = () => {
     const [mostrarFormulario, setMostrarFormulario] = useState(false);
     const [sucursales, setSucursales] = useState([]);
     const [cargandoSucursales, setCargandoSucursales] = useState(false);
+    const [erroresForm, setErroresForm] = useState([]);
 
     // Estados de revisión
     const [pendientesDiseno, setPendientesDiseno] = useState([]);
@@ -20,6 +21,17 @@ const VistaDiseñador = () => {
     // Estados de modales
     const [modalFoto, setModalFoto] = useState({ visible: false, url: '', tarea: null });
     const [modalDiseno, setModalDiseno] = useState({ visible: false, url: '', tarea: null });
+
+    const validarArchivo = (file) => {
+        const permitido = /\.(jpe?g|png|pdf|ai|psd)$/i;
+        if (!permitido.test(file.name)) {
+            return 'Formato no soportado. Usa JPG, PNG, PDF, AI o PSD';
+        }
+        if (file.size > 10 * 1024 * 1024) {
+            return 'El archivo supera 10MB. Comprime o reduce la resolución';
+        }
+        return null;
+    };
 
     // Cargar revisiones pendientes
     const cargarRevisiones = async () => {
@@ -63,6 +75,13 @@ const VistaDiseñador = () => {
         const file = e.target.files?.[0];
         if (!file) return;
 
+        const errorArchivo = validarArchivo(file);
+        if (errorArchivo) {
+            alert(errorArchivo);
+            e.target.value = '';
+            return;
+        }
+
         try {
             const formData = new FormData();
             formData.append('archivo', file);
@@ -83,6 +102,25 @@ const VistaDiseñador = () => {
 
     const enviarCampana = async (e) => {
         e.preventDefault();
+        const mensajesError = [];
+
+        if (!nombreCampana.trim() || nombreCampana.trim().length < 3) {
+            mensajesError.push('Nombre de campaña: mínimo 3 caracteres (ej: Campaña Otoño)');
+        }
+
+        tareas.forEach((tarea, index) => {
+            const numero = index + 1;
+            if (!tarea.local) mensajesError.push(`Tarea ${numero}: selecciona un local`);
+            if (!tarea.tipo) mensajesError.push(`Tarea ${numero}: indica tamaño o tipo`);
+            if (!tarea.cantidad || Number(tarea.cantidad) < 1) mensajesError.push(`Tarea ${numero}: cantidad debe ser mayor a 0`);
+        });
+
+        if (mensajesError.length > 0) {
+            setErroresForm(mensajesError);
+            return;
+        }
+
+        setErroresForm([]);
         try {
             // Priorizar usuario de localStorage
             let disenadorId = null;
@@ -111,9 +149,12 @@ const VistaDiseñador = () => {
             }
 
             const datos = {
-                nombre: nombreCampana,
+                nombre: nombreCampana.trim(),
                 disenador_id: disenadorId,
-                tareas,
+                tareas: tareas.map((t) => ({
+                    ...t,
+                    cantidad: Number(t.cantidad)
+                })),
                 url_diseno_referencia: disenoReferencia
             };
 
@@ -223,6 +264,23 @@ const VistaDiseñador = () => {
                             </button>
                         </div>
                         <form onSubmit={enviarCampana}>
+                            {erroresForm.length > 0 && (
+                                <div style={{
+                                    backgroundColor: '#fdecea',
+                                    color: '#c0392b',
+                                    padding: '12px',
+                                    borderRadius: '6px',
+                                    marginBottom: '15px',
+                                    border: '1px solid #f5b7b1'
+                                }}>
+                                    <strong>Revisa los campos:</strong>
+                                    <ul style={{ margin: '8px 0 0 16px', padding: 0 }}>
+                                        {erroresForm.map((err, idx) => (
+                                            <li key={idx}>{err}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
                             <input
                                 type="text"
                                 placeholder="Nombre de la Campaña"

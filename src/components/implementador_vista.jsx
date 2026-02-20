@@ -12,6 +12,19 @@ const VistaImplementador = ({ usuario }) => {
     const [modalPaquete, setModalPaquete] = useState({ visible: false, url: '', tarea: null });
     const [modalSucursal, setModalSucursal] = useState({ visible: false, url: '', tarea: null });
 
+    const validarFoto = (file) => {
+        const permitido = /\.(jpe?g|png)$/i;
+        if (!permitido.test(file.name)) {
+            return 'Formato no soportado. Usa JPG o PNG';
+        }
+        if (file.size > 10 * 1024 * 1024) {
+            return 'La imagen supera 10MB. Comprime o toma una foto más liviana';
+        }
+        return null;
+    };
+
+    const urlValida = (url) => /^https?:\/\//i.test(url.trim());
+
     const cargarRuta = async () => {
         // Si el usuario tiene sucursal asignada, filtrar por ella
         const params = usuario?.sucursal_asignada
@@ -50,11 +63,16 @@ const VistaImplementador = ({ usuario }) => {
         const foto = prompt("Pega aquí el link de la foto:");
         if (!foto) return;
 
+        if (!urlValida(foto)) {
+            alert('URL inválida. Usa un enlace que comience con http(s)');
+            return;
+        }
+
         const gps = "-33.4489, -70.6693"; // Aquí iría la API de Geolocation de JS
 
         try {
             await axios.put(`${API_BASE_URL}/tareas/implementacion/${currentTask}`, {
-                foto_url: foto,
+                foto_url: foto.trim(),
                 gps: gps
             });
             alert("¡Tarea Finalizada!");
@@ -69,10 +87,16 @@ const VistaImplementador = ({ usuario }) => {
         const file = event.target.files[0];
         if (!file) return;
 
+        const errorArchivo = validarFoto(file);
+        if (errorArchivo) {
+            alert(errorArchivo);
+            event.target.value = '';
+            return;
+        }
+
         setUploading(currentTask);
 
         try {
-            // Primero subir la foto
             const formData = new FormData();
             formData.append('archivo', file);
 
@@ -82,7 +106,6 @@ const VistaImplementador = ({ usuario }) => {
                 }
             });
 
-            // Luego finalizar la tarea con la URL de la foto
             const gps = "-33.4489, -70.6693"; // Aquí iría la API de Geolocation de JS
 
             await axios.put(`${API_BASE_URL}/tareas/implementacion/${currentTask}`, {

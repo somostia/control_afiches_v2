@@ -6,6 +6,7 @@ const FormularioDisenador = () => {
     const [tareas, setTareas] = useState([{ local: '', tipo: '', cantidad: 1 }]);
     const [sucursales, setSucursales] = useState([]);
     const [cargando, setCargando] = useState(true);
+    const [errores, setErrores] = useState([]);
 
     // Cargar sucursales disponibles al montar el componente
     useEffect(() => {
@@ -37,23 +38,66 @@ const FormularioDisenador = () => {
 
     const enviarCampana = async (e) => {
         e.preventDefault();
+        const mensajesError = [];
+
+        if (!nombreCampana.trim() || nombreCampana.trim().length < 3) {
+            mensajesError.push('Nombre de campaña: mínimo 3 caracteres (ej: Campaña Otoño)');
+        }
+
+        tareas.forEach((tarea, index) => {
+            const numero = index + 1;
+            if (!tarea.local) mensajesError.push(`Tarea ${numero}: selecciona un local`);
+            if (!tarea.tipo) mensajesError.push(`Tarea ${numero}: define el tipo de afiche (ej: M)`);
+            if (!tarea.cantidad || Number(tarea.cantidad) < 1) mensajesError.push(`Tarea ${numero}: cantidad debe ser mayor a 0`);
+        });
+
+        if (mensajesError.length > 0) {
+            setErrores(mensajesError);
+            return;
+        }
+
+        setErrores([]);
+
         try {
             const datos = {
-                nombre: nombreCampana,
+                nombre: nombreCampana.trim(),
                 disenador_id: 1, // ID fijo por ahora para pruebas
-                tareas: tareas
+                tareas: tareas.map((t) => ({
+                    ...t,
+                    local: t.local,
+                    tipo: t.tipo,
+                    cantidad: Number(t.cantidad)
+                }))
             };
             const res = await api.post('/campanas', datos);
             alert("Campaña creada con éxito. ID: " + res.data.id);
         } catch (err) {
             console.error(err);
-            alert("Error al crear campaña");
+            const backendError = err.response?.data?.error || 'Error al crear campaña';
+            setErrores([backendError]);
         }
     };
 
     return (
         <div style={{ padding: '20px' }}>
             <h2>Crear Nueva Campaña</h2>
+            {errores.length > 0 && (
+                <div style={{
+                    backgroundColor: '#fdecea',
+                    color: '#c0392b',
+                    padding: '12px',
+                    borderRadius: '6px',
+                    marginBottom: '15px',
+                    border: '1px solid #f5b7b1'
+                }}>
+                    <strong>Revisa los campos:</strong>
+                    <ul style={{ margin: '8px 0 0 16px', padding: 0 }}>
+                        {errores.map((err, idx) => (
+                            <li key={idx}>{err}</li>
+                        ))}
+                    </ul>
+                </div>
+            )}
             {cargando ? (
                 <p>Cargando sucursales...</p>
             ) : (
