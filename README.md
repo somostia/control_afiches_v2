@@ -103,31 +103,6 @@ npm start
 ```
 La aplicación estará disponible en `http://localhost:3000`
 
-## � Usuarios del Sistema
-
-El sistema incluye autenticación con roles específicos y control de acceso por sucursal para implementadores.
-
-### Usuarios Administrativos
-
-| Usuario | Contraseña | Rol | Descripción |
-|---------|------------|-----|-------------|
-| admin | admin | admin | Acceso completo a todas las vistas |
-| supervisor | supervisor | supervisor | Monitoreo de todas las tareas |
-| disenador | disenador | disenador | Creación de campañas y aprobaciones |
-| dibujante | dibujante | dibujante | Diseño y preparación de paquetes |
-
-### Implementadores por Sucursal
-
-| Usuario | Contraseña | Sucursal Asignada |
-|---------|------------|-------------------|
-| impl_plaza | impl_plaza | Mall Plaza |
-| impl_costanera | impl_costanera | Costanera Center |
-| impl_dehesa | impl_dehesa | Portal La Dehesa |
-| impl_arauco | impl_arauco | Parque Arauco |
-| impl_altocondes | impl_altocondes | Alto Las Condes |
-
-> **Nota**: Cada implementador solo puede ver y gestionar las tareas de su sucursal asignada.
-
 ## �📁 Estructura del Proyecto
 
 ```

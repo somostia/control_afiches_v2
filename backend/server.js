@@ -153,25 +153,18 @@ app.post('/login', loginLimiter, async (req, res) => {
     }
 });
 
-// Ruta raíz - Health check
+// Ruta raíz - Health check básica
 app.get('/', (req, res) => {
     res.json({
         mensaje: 'API Sistema de Afiches',
         version: '1.0.0',
-        estado: 'activo',
-        endpoints: {
-            campanas: 'POST /campanas',
-            dashboard: 'GET /dashboard',
-            upload: 'POST /upload-diseno',
-            dibujo: 'PUT /tareas/dibujo/:id',
-            vobo: 'PUT /tareas/vobo-diseno/:id',
-            preparar_despacho: 'PUT /tareas/preparar-despacho/:id',
-            despacho: 'PUT /tareas/despacho/:id',
-            recibir: 'PUT /tareas/recibir/:id',
-            implementacion: 'PUT /tareas/implementacion/:id',
-            vobo_impl: 'PUT /tareas/vobo-implementacion/:id'
-        }
+        estado: 'activo'
     });
+});
+
+// Ruta de health usada por docker-compose y monitoreo
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', ts: new Date().toISOString() });
 });
 
 // Ruta para subir archivo de diseño
