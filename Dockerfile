@@ -6,6 +6,10 @@ WORKDIR /app
 # Copiar archivos de dependencias
 COPY package*.json ./
 
+# Inyectar variables de build (React solo lee REACT_APP_ en build)
+ARG REACT_APP_API_URL
+ENV REACT_APP_API_URL=${REACT_APP_API_URL}
+
 # Instalar dependencias
 RUN npm install
 

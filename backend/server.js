@@ -176,7 +176,9 @@ app.post('/upload-diseno', upload.single('archivo'), validateUploadArchivo, (req
             return res.status(400).json({ error: 'No se recibió ningún archivo' });
         }
 
-        const fileUrl = `http://localhost:${PORT}/uploads/${req.file.filename}`;
+        // Usar la URL del backend configurada o construir dinámicamente
+        const baseUrl = process.env.BACKEND_URL || `${req.protocol}://${req.get('host')}`;
+        const fileUrl = `${baseUrl}/uploads/${req.file.filename}`;
         logger.info(`Archivo subido: ${req.file.filename}`);
         logger.debug(`URL generada: ${fileUrl}`);
 
