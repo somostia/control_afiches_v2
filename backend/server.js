@@ -114,8 +114,16 @@ app.use('/uploads', express.static(uploadsDir, {
 }));
 
 // Ruta de login
-app.post('/login', validateLogin, loginLimiter, async (req, res) => {
+app.post("/login", /* validateLogin, */ /* loginLimiter, */ async (req, res) => {
+    console.log('=== LOGIN DEBUG ===');
+    console.log('req.body:', req.body);
+    console.log('usuario:', req.body.usuario);
+    console.log('password:', req.body.password);
+    console.log('password length:', req.body.password ? req.body.password.length : 'undefined');
+    console.log('=== END DEBUG ===');
+    
     const { usuario, password } = req.body;
+    console.log("🔍 Extraídos del body - usuario:", usuario, "password:", password);
 
     if (!usuario || !password) {
         logger.warn('Intento de login sin credenciales');
@@ -123,6 +131,7 @@ app.post('/login', validateLogin, loginLimiter, async (req, res) => {
     }
 
     try {
+        console.log("🔍 INICIANDO CONSULTA BD...");
         const resultado = await pool.query(
             'SELECT id, nombre, usuario, rol, sucursal_id, password FROM usuarios WHERE usuario = $1',
             [usuario]
@@ -172,6 +181,7 @@ app.get('/api/health', (req, res) => {
 // Ruta para subir archivo de diseño
 app.post('/upload-diseno', upload.single('archivo'), validateUploadArchivo, (req, res) => {
     try {
+        console.log("🔍 INICIANDO CONSULTA BD...");
         if (!req.file) {
             return res.status(400).json({ error: 'No se recibió ningún archivo' });
         }
@@ -197,6 +207,7 @@ app.post('/upload-diseno', upload.single('archivo'), validateUploadArchivo, (req
 app.post('/campanas', validateCampana, async (req, res) => {
     const { nombre, disenador_id, tareas, url_diseno_referencia } = req.body;
     try {
+        console.log("🔍 INICIANDO CONSULTA BD...");
         logger.info(`Creando campaña: ${nombre}`, { disenador_id, tareas });
 
         // Creamos la campaña
@@ -227,6 +238,7 @@ app.post('/campanas', validateCampana, async (req, res) => {
 // También usada por IMPLEMENTADORES con filtro por sucursal
 app.get('/dashboard', async (req, res) => {
     try {
+        console.log("🔍 INICIANDO CONSULTA BD...");
         const { sucursal } = req.query; // Parámetro opcional para filtrar por sucursal
 
         let query = `
@@ -257,6 +269,7 @@ app.get('/dashboard', async (req, res) => {
 // 3. Ruta para obtener todas las sucursales disponibles
 app.get('/sucursales', async (req, res) => {
     try {
+        console.log("🔍 INICIANDO CONSULTA BD...");
         const resultado = await pool.query(
             'SELECT id, nombre, direccion FROM sucursales WHERE activo = TRUE ORDER BY nombre'
         );
@@ -271,6 +284,7 @@ app.put('/tareas/dibujo/:id', validateDiseno, async (req, res) => {
     const { id } = req.params;
     const { url_diseno } = req.body;
     try {
+        console.log("🔍 INICIANDO CONSULTA BD...");
         await pool.query(
             "UPDATE tareas_implementacion SET url_diseno_archivo = $1, estado_diseno = 'amarillo' WHERE id = $2",
             [url_diseno, id]
@@ -286,6 +300,7 @@ app.put('/tareas/vobo-diseno/:id', validateVoBo, async (req, res) => {
     const { id } = req.params;
     const { aprobado } = req.body; // true o false
     try {
+        console.log("🔍 INICIANDO CONSULTA BD...");
         const estado = aprobado ? 'aprobado' : 'pendiente';
         await pool.query(
             "UPDATE tareas_implementacion SET vobo_diseno_ok = $1, estado_diseno = $2 WHERE id = $3",
@@ -303,6 +318,7 @@ app.put('/tareas/despacho/:id', validateLogistica, async (req, res) => {
     const { id } = req.params;
     const { estado_logistica } = req.body; // 'en_preparacion', 'en_transito'
     try {
+        console.log("🔍 INICIANDO CONSULTA BD...");
         await pool.query(
             "UPDATE tareas_implementacion SET estado_logistica = $1 WHERE id = $2",
             [estado_logistica, id]
@@ -322,6 +338,7 @@ app.put('/tareas/preparar-despacho/:id', async (req, res) => {
     logger.debug(`URL foto paquete: ${url_foto_paquete}`);
 
     try {
+        console.log("🔍 INICIANDO CONSULTA BD...");
         const result = await pool.query(
             "UPDATE tareas_implementacion SET url_foto_paquete = $1, estado_logistica = 'en_preparacion' WHERE id = $2 RETURNING *",
             [url_foto_paquete, id]
@@ -339,6 +356,7 @@ app.put('/tareas/preparar-despacho/:id', async (req, res) => {
 app.put('/tareas/recibir/:id', async (req, res) => {
     const { id } = req.params;
     try {
+        console.log("🔍 INICIANDO CONSULTA BD...");
         await pool.query(
             "UPDATE tareas_implementacion SET estado_logistica = 'recibido' WHERE id = $1",
             [id]
@@ -354,6 +372,7 @@ app.put('/tareas/implementacion/:id', validateImplementacion, async (req, res) =
     const { id } = req.params;
     const { foto_url, gps } = req.body;
     try {
+        console.log("🔍 INICIANDO CONSULTA BD...");
         await pool.query(
             `UPDATE tareas_implementacion 
              SET foto_evidencia_url = $1, 
@@ -374,6 +393,7 @@ app.put('/tareas/vobo-implementacion/:id', validateVoBoImplementacion, async (re
     const { id } = req.params;
     const { aprobado } = req.body; // true o false
     try {
+        console.log("🔍 INICIANDO CONSULTA BD...");
         // Si se aprueba, marcar como instalado. Si se rechaza, volver a recibido
         const nuevoEstado = aprobado ? 'instalado' : 'recibido';
         await pool.query(
