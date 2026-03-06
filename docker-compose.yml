@@ -14,8 +14,7 @@ services:
       DB_NAME: sistema_afiches
       DB_USER: postgres
       DB_PASSWORD: ${DB_PASSWORD:-Buzta2026}
-      JWT_SECRET: ${JWT_SECRET}
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+      FRONTEND_URL: ${FRONTEND_URL:-https://control-afiches.vorziehen.com}
     ports:
       - "3002:3002"
     volumes:
